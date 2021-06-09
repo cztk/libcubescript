@@ -373,6 +373,20 @@ LIBCUBESCRIPT_EXPORT void state::clear_override(ident &id) {
     }
 }
 
+LIBCUBESCRIPT_EXPORT void state::set_var_ptr(std::string_view n, void *ptr) {
+    auto id = get_ident(n);
+    if(!id) {
+        throw error_p::make(
+                *this, "variable '%s' does not exist", n.data()
+        );
+    }
+    if (id->get().type() == ident_type::VAR) {
+        auto &v = static_cast<var_impl &>(id->get());
+        v.ptr = ptr;
+
+    }
+}
+
 LIBCUBESCRIPT_EXPORT void state::clear_overrides() {
     for (auto &p: p_tstate->istate->idents) {
         clear_override(*(p.second));

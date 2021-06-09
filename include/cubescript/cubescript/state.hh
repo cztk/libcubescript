@@ -163,6 +163,14 @@ struct LIBCUBESCRIPT_EXPORT state {
      */
     void clear_override(ident &id);
 
+    /** @brief set a pointer to application variable
+     *
+     * If a pointer is set, a value change will be reflected on
+     * the application variable aswell.
+     */
+    void set_var_ptr(std::string_view n, void *ptr);
+
+
     /** @brief Clear override state for all idents.
      *
      * @see clear_override()

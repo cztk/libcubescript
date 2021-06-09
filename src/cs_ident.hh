@@ -72,6 +72,7 @@ struct var_impl: ident_impl, builtin_var {
 
     command *get_setter(thread_state &ts) const;
 
+    void *ptr = nullptr;
     any_value p_storage{};
     any_value p_override{};
 };

@@ -276,12 +276,18 @@ LIBCUBESCRIPT_EXPORT void builtin_var::set_raw_value(
     switch (static_cast<var_impl *>(p_impl)->p_storage.type()) {
         case value_type::INTEGER:
             val.force_integer();
+            if(nullptr != static_cast<var_impl *>(p_impl)->ptr)
+                *static_cast<int*>(static_cast<var_impl *>(p_impl)->ptr) = val.get_integer();
             break;
         case value_type::FLOAT:
             val.force_float();
+            if(nullptr != static_cast<var_impl *>(p_impl)->ptr)
+                *static_cast<float*>(static_cast<var_impl *>(p_impl)->ptr) = val.get_float();
             break;
         case value_type::STRING:
             val.force_string(cs);
+            if(nullptr != static_cast<var_impl *>(p_impl)->ptr)
+                *static_cast<std::string*>(static_cast<var_impl *>(p_impl)->ptr) = val.get_string(cs);
             break;
         default:
             abort(); /* unreachable unless we have a bug */
