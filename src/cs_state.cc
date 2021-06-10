@@ -128,7 +128,7 @@ state::state(alloc_func func, void *data) {
         auto &iv = static_cast<builtin_var &>(args[0].get_ident(cs));
         if (args[2].get_integer() <= 1) {
             std::printf("%s = ", iv.name().data());
-            std::printf(INTEGER_FORMAT, iv.value().get_integer());
+            std::printf(INTEGER_FORMAT, iv.value(cs).get_integer());
             std::printf("\n");
         } else {
             iv.set_value(cs, args[1]);
@@ -140,7 +140,7 @@ state::state(alloc_func func, void *data) {
     ) {
         auto &fv = static_cast<builtin_var &>(args[0].get_ident(cs));
         if (args[2].get_integer() <= 1) {
-            auto val = fv.value().get_float();
+            auto val = fv.value(cs).get_float();
             std::printf("%s = ", fv.name().data());
             if (std::floor(val) == val) {
                 std::printf(ROUND_FLOAT_FORMAT, val);
@@ -158,7 +158,7 @@ state::state(alloc_func func, void *data) {
     ) {
         auto &sv = static_cast<builtin_var &>(args[0].get_ident(cs));
         if (args[2].get_integer() <= 1) {
-            auto val = sv.value().get_string(cs);
+            auto val = sv.value(cs).get_string(cs);
             if (val.view().find('"') == std::string_view::npos) {
                 std::printf("%s = \"%s\"\n", sv.name().data(), val.data());
             } else {
@@ -360,9 +360,9 @@ LIBCUBESCRIPT_EXPORT void state::clear_override(ident &id) {
         }
         case ident_type::VAR: {
             auto &v = static_cast<var_impl &>(id);
-            any_value oldv = v.value();
+            any_value oldv = v.value(*this);
             v.p_storage = std::move(v.p_override);
-            var_changed(*p_tstate, v, oldv);
+            var_changed(*this, *p_tstate, v, oldv);
             static_cast<var_impl *>(
                 static_cast<builtin_var *>(&v)
             )->p_flags &= ~IDENT_FLAG_OVERRIDDEN;
@@ -536,7 +536,7 @@ LIBCUBESCRIPT_EXPORT any_value state::lookup_value(std::string_view name) {
                 return ast->node->val_s.get_plain();
             }
             case ident_type::VAR:
-                return static_cast<builtin_var *>(id)->value();
+                return static_cast<builtin_var *>(id)->value(*this);
             case ident_type::COMMAND: {
                 any_value val{};
                 auto *cimpl = static_cast<command_impl *>(id);
@@ -589,8 +589,8 @@ LIBCUBESCRIPT_EXPORT void state::touch_value(std::string_view name) {
         return;
     }
     auto &v = static_cast<builtin_var &>(idr);
-    auto vv = v.value();
-    var_changed(*p_tstate, v, vv);
+    auto vv = v.value(*this);
+    var_changed(*this, *p_tstate, v, vv);
 }
 
 static char const *allowed_builtins[] = {

@@ -70,7 +70,7 @@ command_impl::command_impl(
     p_cargs{args}, p_cb_cftv{std::move(f)}, p_numargs{nargs}
 {}
 
-void var_changed(thread_state &ts, builtin_var &id, any_value &oldval) {
+void var_changed(state &cs, thread_state &ts, builtin_var &id, any_value &oldval) {
     auto *cid = ts.istate->cmd_var_changed;
     if (!cid) {
         return;
@@ -79,7 +79,7 @@ void var_changed(thread_state &ts, builtin_var &id, any_value &oldval) {
     any_value val[3] = {};
     val[0].set_ident(id);
     val[1] = std::move(oldval);
-    val[2] = id.value();
+    val[2] = id.value(cs);
     cimp->call(ts, span_type<any_value>{
         static_cast<any_value *>(val), 3
     }, val[0]);
@@ -266,7 +266,27 @@ LIBCUBESCRIPT_EXPORT any_value builtin_var::call(
     return ret;
 }
 
-LIBCUBESCRIPT_EXPORT any_value builtin_var::value() const {
+LIBCUBESCRIPT_EXPORT any_value builtin_var::value(state &cs) const {
+    switch (static_cast<var_impl *>(p_impl)->p_storage.type()) {
+        case value_type::INTEGER:
+            if(nullptr != static_cast<var_impl *>(p_impl)->ptr)
+                static_cast<var_impl *>(p_impl)->p_storage = *static_cast<int*>(static_cast<var_impl *>(p_impl)->ptr);
+            break;
+        case value_type::FLOAT:
+            if(nullptr != static_cast<var_impl *>(p_impl)->ptr)
+                static_cast<var_impl *>(p_impl)->p_storage = *static_cast<float*>(static_cast<var_impl *>(p_impl)->ptr);
+            break;
+        case value_type::STRING:
+            if(nullptr != static_cast<var_impl *>(p_impl)->ptr) {
+                std::string vv = *static_cast<std::string *>(static_cast<var_impl *>(p_impl)->ptr);
+                std::string_view food( vv.c_str(), vv.size() );
+                //std::string_view view = *static_cast<std::string *>(static_cast<var_impl *>(p_impl)->ptr);
+                static_cast<var_impl *>(p_impl)->p_storage.set_string(food, cs) ;
+            }
+            break;
+        default:
+            break;
+    }
     return static_cast<var_impl const *>(p_impl)->p_storage;
 }
 
@@ -308,10 +328,10 @@ LIBCUBESCRIPT_EXPORT void builtin_var::set_value(
         return;
     }
     save(cs);
-    auto oldv = value();
+    auto oldv = value(cs);
     set_raw_value(cs, std::move(val));
     if (trigger) {
-        var_changed(state_p{cs}.ts(), *this, oldv);
+        var_changed(cs, state_p{cs}.ts(), *this, oldv);
     }
 }
 
@@ -342,7 +362,7 @@ LIBCUBESCRIPT_EXPORT any_value alias::call(
     auto nargs = args.size();
     auto &ast = ts.get_astack(this);
     if (ast.node->val_s.type() != value_type::NONE) {
-        return exec_alias(ts, this, &args[0], nargs, ast);
+        return exec_alias(cs, ts, this, &args[0], nargs, ast);
     }
     return any_value{};
 }

@@ -77,7 +77,7 @@ struct var_impl: ident_impl, builtin_var {
     any_value p_override{};
 };
 
-void var_changed(thread_state &ts, builtin_var &id, any_value &oldval);
+void var_changed(state &cs, thread_state &ts, builtin_var &id, any_value &oldval);
 
 struct alias_impl: ident_impl, alias {
     alias_impl(state &cs, string_ref n, string_ref a, int flags);

@@ -122,6 +122,7 @@ void exec_command(
 }
 
 any_value exec_alias(
+        state &cs,
     thread_state &ts, alias *a, any_value *args,
     std::size_t callargs, alias_stack &astack
 ) {
@@ -140,7 +141,7 @@ any_value exec_alias(
         st.val_s = std::move(args[i]);
         uargs[i] = true;
     }
-    auto oldargs = anargs->value();
+    auto oldargs = anargs->value(cs);
     auto oldflags = ts.ident_flags;
     ts.ident_flags = astack.flags;
     any_value cv;
@@ -182,7 +183,7 @@ any_value exec_alias(
         tss.idstack.resize(nids);
     };
     try {
-        vm_exec(ts, bcode_p{coderef}.get()->raw(), ret);
+        vm_exec(cs, ts, bcode_p{coderef}.get()->raw(), ret);
     } catch (...) {
         cleanup(ts, callargs, noff, oldflags);
         anargs->set_raw_value(*ts.pstate, std::move(oldargs));
@@ -265,7 +266,7 @@ struct vm_guard {
     std::size_t oldtop;
 };
 
-std::uint32_t *vm_exec(
+std::uint32_t *vm_exec(state &mcs,
     thread_state &ts, std::uint32_t *code, any_value &result
 ) {
     result.set_none();
@@ -318,11 +319,11 @@ std::uint32_t *vm_exec(
                 continue;
 
             case BC_INST_ENTER:
-                code = vm_exec(ts, code, args.emplace_back());
+                code = vm_exec(cs, ts, code, args.emplace_back());
                 continue;
 
             case BC_INST_ENTER_RESULT:
-                code = vm_exec(ts, code, result);
+                code = vm_exec(cs, ts, code, result);
                 continue;
 
             case BC_INST_EXIT:
@@ -422,7 +423,7 @@ std::uint32_t *vm_exec(
                     state_p{css}.ts().idstack.resize(isz);
                 };
                 try {
-                    code = vm_exec(ts, code, result);
+                    code = vm_exec(cs, ts, code, result);
                 } catch (...) {
                     cleanup(cs, offset, idstsz, args);
                     throw;
@@ -618,7 +619,7 @@ std::uint32_t *vm_exec(
             case BC_INST_VAR:
                 args.emplace_back() = static_cast<builtin_var *>(
                     ts.istate->identmap[op >> 8]
-                )->value();
+                )->value(mcs);
                 goto use_top;
 
             case BC_INST_ALIAS: {
@@ -661,7 +662,7 @@ std::uint32_t *vm_exec(
                         cs, "unknown command: %s", id->name().data()
                     );
                 }
-                result = exec_alias(ts, imp, &args[offset], callargs, ast);
+                result = exec_alias(cs, ts, imp, &args[offset], callargs, ast);
                 args.resize(offset);
                 goto use_result;
             }
@@ -716,7 +717,7 @@ noid:
                             );
                         }
                         try {
-                            code = vm_exec(ts, code, result);
+                            code = vm_exec(cs, ts, code, result);
                         } catch (...) {
                             for (std::size_t j = 0; j < callargs; ++j) {
                                 pop_alias(ts, args[offset + j].get_ident(cs));
@@ -757,7 +758,7 @@ noid:
                         if (ast.node->val_s.type() == value_type::NONE) {
                             goto noid;
                         }
-                        result = exec_alias(
+                        result = exec_alias(mcs,
                             ts, a, &args[offset], callargs, ast
                         );
                         args.resize(offset - 1);

@@ -23,13 +23,14 @@ void exec_command(
 );
 
 any_value exec_alias(
+        state &cs,
     thread_state &ts, alias *a, any_value *args,
     std::size_t callargs, alias_stack &astack
 );
 
 any_value exec_code_with_args(thread_state &ts, bcode_ref const &body);
 
-std::uint32_t *vm_exec(
+std::uint32_t *vm_exec(state &mcs,
     thread_state &ts, std::uint32_t *code, any_value &result
 );
 

@@ -53,7 +53,7 @@ inline void init_lineedit(cs::state &cs, std::string_view) {
 
 inline std::optional<std::string> read_line(cs::state &s, cs::builtin_var &pr) {
     std::string line;
-    auto quit = linenoise::Readline(pr.value().get_string(s).data(), line);
+    auto quit = linenoise::Readline(pr.value(s).get_string(s).data(), line);
     if (quit) {
         /* linenoise traps ctrl-c, detect it and let the user exit */
         if (errno == EAGAIN) {

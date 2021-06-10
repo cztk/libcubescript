@@ -16,7 +16,7 @@ static void save_stack(
     auto &ts = state_p{cs}.ts();
     builtin_var *dalias = ts.istate->ivar_dbgalias;
     auto dval = std::size_t(std::clamp(
-        dalias->value().get_integer(), integer_type(0), integer_type(1000)
+        dalias->value(cs).get_integer(), integer_type(0), integer_type(1000)
     ));
     if (!dval) {
         sbeg = send = nullptr;

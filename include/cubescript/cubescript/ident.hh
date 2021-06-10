@@ -180,7 +180,7 @@ struct LIBCUBESCRIPT_EXPORT builtin_var: ident {
     any_value call(span_type<any_value> args, state &cs);
 
     /** @brief Get the value of the variable. */
-    any_value value() const;
+    any_value value(state &cs) const;
 
     /** @brief Set the value of the variable in a raw manner.
      *

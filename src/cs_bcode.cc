@@ -48,7 +48,7 @@ LIBCUBESCRIPT_EXPORT bcode_ref::operator bool() const {
 
 LIBCUBESCRIPT_EXPORT any_value bcode_ref::call(state &cs) const {
     any_value ret{};
-    vm_exec(state_p{cs}.ts(), p_code->raw(), ret);
+    vm_exec(cs, state_p{cs}.ts(), p_code->raw(), ret);
     return ret;
 }
 

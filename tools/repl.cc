@@ -320,11 +320,11 @@ int main(int argc, char **argv) {
      * work equivalently - in this case we want to allow multiple values
      * to be set, but you may also not be using standard i/o and so on
      */
-    gcs.new_command("//ivar", "$iii#", [](auto &css, auto args, auto &) {
+    gcs.new_command("//ivar", "$iii#", [&gcs](auto &css, auto args, auto &) {
         auto &iv = static_cast<cs::builtin_var &>(args[0].get_ident(css));
         auto nargs = args[4].get_integer();
         if (nargs <= 1) {
-            auto val = iv.value().get_integer();
+            auto val = iv.value(gcs).get_integer();
             if ((val >= 0) && (val < 0xFFFFFF)) {
                 std::printf(
                     "%s = %d (0x%.6X: %d, %d, %d)\n",
